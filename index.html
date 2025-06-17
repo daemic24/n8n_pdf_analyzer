@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Analyzer - Upload PDFs (Test)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background-color: #f0f4ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #ddd;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 14px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .files-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .remove-file {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .remove-file:hover {
+            background: #c82333;
+        }
+
+        .upload-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress {
+            width: 100%;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .result {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PDF Analyzer (Test)</h1>
+            <p>Upload multiple PDF files for AI-powered analysis</p>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">Choose PDF files or drag them here</div>
+            <div class="upload-subtext">Maximum file size: 10MB each • Multiple files supported</div>
+        </div>
+
+        <input type="file" id="fileInput" accept=".pdf" multiple />
+
+        <div class="files-list" id="filesList">
+            <div id="filesContainer"></div>
+        </div>
+
+        <div class="progress" id="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <button class="upload-btn" id="uploadBtn">Upload & Analyze PDFs</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const filesList = document.getElementById('filesList');
+        const filesContainer = document.getElementById('filesContainer');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progress = document.getElementById('progress');
+        const progressBar = document.getElementById('progressBar');
+        const result = document.getElementById('result');
+        
+        let selectedFiles = [];
+
+        // Click to select files
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            const validFiles = files.filter(file => {
+                if (file.type !== 'application/pdf') {
+                    showResult(`${file.name} is not a PDF file.`, 'error');
+                    return false;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    showResult(`${file.name} is larger than 10MB.`, 'error');
+                    return false;
+                }
+                return true;
+            });
+
+            // Add valid files to selection
+            validFiles.forEach(file => {
+                if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+                    selectedFiles.push(file);
+                }
+            });
+
+            updateFilesList();
+            result.style.display = 'none';
+        }
+
+        function updateFilesList() {
+            if (selectedFiles.length === 0) {
+                filesList.style.display = 'none';
+                uploadBtn.style.display = 'none';
+                return;
+            }
+
+            filesContainer.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button class="remove-file" onclick="removeFile(${index})">Remove</button>
+                `;
+                filesContainer.appendChild(fileItem);
+            });
+
+            filesList.style.display = 'block';
+            uploadBtn.style.display = 'block';
+            uploadBtn.textContent = `Upload & Analyze ${selectedFiles.length} PDF${selectedFiles.length > 1 ? 's' : ''}`;
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFilesList();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        uploadBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            const formData = new FormData();
+            selectedFiles.forEach((file, index) => {
+                formData.append(`file_${index}`, file);
+            });
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+            progress.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const xhr = new XMLHttpRequest();
+                
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        progressBar.style.width = percentComplete + '%';
+                    }
+                };
+
+                xhr.onload = function() {
+                    progress.style.display = 'none';
+                    uploadBtn.disabled = false;
+                    uploadBtn.textContent = `Upload & Analyze ${selectedFiles.length} PDF${selectedFiles.length > 1 ? 's' : ''}`;
+
+                    if (xhr.status === 200) {
+                        const contentType = xhr.getResponseHeader('content-type');
+                        
+                        // Debug logging
+                        console.log('Response Status:', xhr.status);
+                        console.log('Content-Type:', contentType);
+                        console.log('Response Text (first 500 chars):', xhr.responseText.substring(0, 500));
+                        console.log('Response Length:', xhr.responseText.length);
+                        
+                        if (contentType && contentType.includes('application/json')) {
+                            // Handle JSON response with multiple CSV files
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                console.log('Parsed JSON Response:', response);
+                                
+                                if (response.csvFiles && Array.isArray(response.csvFiles)) {
+                                    // Multiple CSV files in JSON response
+                                    console.log('Found csvFiles array with length:', response.csvFiles.length);
+                                    response.csvFiles.forEach((csvFile, index) => {
+                                        const filename = csvFile.filename || `pdf_analysis_${index + 1}.csv`;
+                                        console.log(`Downloading file ${index + 1}:`, filename);
+                                        downloadCSV(csvFile.data, filename);
+                                    });
+                                    showResult(`Analysis completed! ${response.csvFiles.length} CSV files downloaded.`, 'success');
+                                } else {
+                                    console.log('No csvFiles array found in response');
+                                    showResult(response.message || `${selectedFiles.length} PDF${selectedFiles.length > 1 ? 's' : ''} uploaded and analysis started successfully!`, 'success');
+                                }
+                            } catch (e) {
+                                console.error('JSON parsing error:', e);
+                                showResult('Invalid JSON response received. Check console for details.', 'error');
+                            }
+                        } else if (contentType && contentType.includes('text/csv')) {
+                            // Handle single CSV response
+                            console.log('Handling single CSV response');
+                            const csvData = xhr.responseText;
+                            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                            downloadCSV(csvData, `pdf_analysis_${timestamp}.csv`);
+                            showResult(`Analysis completed for ${selectedFiles.length} PDF${selectedFiles.length > 1 ? 's' : ''}! CSV file downloaded.`, 'success');
+                        } else {
+                            // Handle other response types
+                            console.log('Handling other response type');
+                            let response;
+                            try {
+                                response = JSON.parse(xhr.responseText);
+                                console.log('Fallback JSON parse successful:', response);
+                            } catch (e) {
+                                console.log('Fallback JSON parse failed, using default message');
+                                response = { message: 'Upload successful!' };
+                            }
+                            showResult(response.message || `${selectedFiles.length} PDF${selectedFiles.length > 1 ? 's' : ''} uploaded and analysis started successfully!`, 'success');
+                        }
+                    } else {
+                        console.log('HTTP Error:', xhr.status, xhr.statusText);
+                        showResult(`Upload failed: ${xhr.status} ${xhr.statusText}`, 'error');
+                    }
+                };
+
+                xhr.onerror = function() {
+                    progress.style.display = 'none';
+                    uploadBtn.disabled = false;
+                    uploadBtn.textContent = `Upload & Analyze ${selectedFiles.length} PDF${selectedFiles.length > 1 ? 's' : ''}`;
+                    showResult('Network error occurred during upload.', 'error');
+                };
+
+                xhr.open('POST', 'https://daemic.app.n8n.cloud/webhook/ai_pdf_summariser');
+                xhr.send(formData);
+
+            } catch (error) {
+                progress.style.display = 'none';
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = `Upload & Analyze ${selectedFiles.length} PDF${selectedFiles.length > 1 ? 's' : ''}`;
+                showResult('An error occurred: ' + error.message, 'error');
+            }
+        });
+
+        function downloadCSV(csvData, filename) {
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function showResult(message, type) {
+            result.textContent = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+        }
+
+        // Make removeFile function global
+        window.removeFile = removeFile;
+    </script>
+</body>
+</html>
