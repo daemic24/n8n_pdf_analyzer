@@ -473,6 +473,13 @@
                         if (contentType && contentType.includes('application/json')) {
                             // Handle JSON response with multiple CSV files
                             try {
+                                // Check if response text is not empty before parsing
+                                if (!xhr.responseText || xhr.responseText.trim() === '') {
+                                    console.error('Empty JSON response received');
+                                    showResult('Empty response received from server.', 'error');
+                                    return;
+                                }
+                                
                                 const response = JSON.parse(xhr.responseText);
                                 console.log('Parsed JSON Response:', response);
                                 
@@ -505,10 +512,17 @@
                             console.log('Handling other response type');
                             let response;
                             try {
-                                response = JSON.parse(xhr.responseText);
-                                console.log('Fallback JSON parse successful:', response);
+                                // Check if response text is not empty before parsing
+                                if (!xhr.responseText || xhr.responseText.trim() === '') {
+                                    console.log('Empty response, using default message');
+                                    response = { message: 'Upload successful!' };
+                                } else {
+                                    response = JSON.parse(xhr.responseText);
+                                    console.log('Fallback JSON parse successful:', response);
+                                }
                             } catch (e) {
                                 console.log('Fallback JSON parse failed, using default message');
+                                console.error('JSON parse error:', e);
                                 response = { message: 'Upload successful!' };
                             }
                             showResult(response.message || `${selectedFiles.length} PDF${selectedFiles.length > 1 ? 's' : ''} uploaded and analysis started successfully!`, 'success');
@@ -526,7 +540,7 @@
                     showResult('Network error occurred during upload.', 'error');
                 };
 
-                xhr.open('POST', 'https://primary-production-0215a.up.railway.app/webhook/ai_pdf_summariser');
+                xhr.open('POST', 'https://primary-production-0215a.up.railway.app/webhook-test/ai_pdf_summariser');
                 xhr.send(formData);
 
             } catch (error) {
